@@ -1,0 +1,12 @@
+[12:05:11][22085][delete_fcgi.c][117]fdfs_delete_file: storage_delete_file1 delete source urlg01/M00/00/01/CgEBxVyu5smAI.png fail: errorno[2] No such file or directory
+[12:05:11][22085][delete_fcgi.c][206]main: fdfs_delete_file fail
+[12:06:42][22597][delete_fcgi.c][117]fdfs_delete_file: storage_delete_file1 delete source urlg01/M00/00/01/CgEBxVyu5smAI.png fail: errorno[2] No such file or directory
+[12:06:42][22597][delete_fcgi.c][206]main: fdfs_delete_file fail
+[12:13:10][23354][delete_fcgi.c][117]fdfs_delete_file: storage_delete_file1 delete source urlg01/M00/00/01/CgEBxVyu5smAI.png fail: errorno[2] No such file or directory
+[12:13:10][23354][delete_fcgi.c][206]main: fdfs_delete_file fail
+[12:27:29][23354][delete_fcgi.c][117]fdfs_delete_file: storage_delete_file1 delete source urlg01/M00/00/01/CgEBxVyu5smAI.png fail: errorno[2] No such file or directory
+[12:27:29][23354][delete_fcgi.c][206]main: fdfs_delete_file fail
+[13:31:31][26529][delete_fcgi.c][117]fdfs_delete_file: storage_delete_file1 delete source urlg01/M00/00/01/CgEBxVyu5smAI_0EAA7dujqtKKw548.png fail: errorno[2] No such file or directory
+[13:31:31][26529][delete_fcgi.c][206]main: fdfs_delete_file fail
+[13:31:33][26529][delete_fcgi.c][117]fdfs_delete_file: storage_delete_file1 delete source urlg01/M00/00/01/CgEBxVyu5smAI_0EAA7dujqtKKw548.png fail: errorno[2] No such file or directory
+[13:31:33][26529][delete_fcgi.c][206]main: fdfs_delete_file fail

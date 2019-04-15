@@ -1,0 +1,48 @@
+[11:22:37][16859]fastcgi begin
+[11:22:37][16860]fastcgi begin
+[11:22:37][16861]fastcgi begin
+[11:32:25][18118]fastcgi begin
+[11:32:25][18119]fastcgi begin
+[11:32:25][18120]fastcgi begin
+[11:34:43][18266]fastcgi begin
+[11:34:43][18267]fastcgi begin
+[11:34:43][18268]fastcgi begin
+[11:36:05][18771]fastcgi begin
+[11:36:05][18772]fastcgi begin
+[11:36:05][18773]fastcgi begin
+[11:36:21][18801]fastcgi begin
+[11:36:21][18802]fastcgi begin
+[11:36:21][18803]fastcgi begin
+[11:37:41][18803]----Request number 1 running on host 10.1.1.197 Process ID: 18803
+[11:37:41][18803][100]Deleteing picture prefix g01/M00/00/01/CgEBxVytrSWAdxU9ABLEoLzSn6s172 ...
+[11:37:41][18803][107]Deleteing source picture url g01/M00/00/01/CgEBxVytrSWAdxU9ABLEoLzSn6s172.png ...
+[11:37:41][18803][134]Deleteing square picture url g01/M00/00/01/CgEBxVytrSWAdxU9ABLEoLzSn6s172_128x128.png ...
+[11:37:41][18803][145]Deleteing picture g01/M00/00/01/CgEBxVytrSWAdxU9ABLEoLzSn6s172_256x115.png ...
+[11:59:38][21391]fastcgi begin
+[11:59:38][21392]fastcgi begin
+[11:59:38][21393]fastcgi begin
+[12:00:01][21393]----Request number 1 running on host 10.1.1.197 Process ID: 21393
+[12:00:01][21393][146]Deleteing picture g01/M00/00/01/CgEBxVytrSWARsCmABLEoLzSn6s881_256x115.png ...
+[12:00:01][21393][60]Deleteing picture prefix g01/M00/00/01/CgEBxVytrSWARsCmABLEoLzSn6s881.png ...
+[12:00:01][21393][62]Deleteing source picture url g01/M00/00/01/CgEBxVytrSWARsCmABLEoLzSn6s881.png ...
+[12:00:01][21393][64]Deleteing square picture url g01/M00/00/01/CgEBxVytrSWARsCmABLEoLzSn6s881_128x128.png ...
+[12:04:40][22083]fastcgi begin
+[12:04:40][22084]fastcgi begin
+[12:04:41][22085]fastcgi begin
+[12:05:11][22085]----Request number 1 running on host 10.1.1.197 Process ID: 22085
+[12:06:22][22595]fastcgi begin
+[12:06:22][22596]fastcgi begin
+[12:06:22][22597]fastcgi begin
+[12:06:42][22597]----Request number 1 running on host 10.1.1.197 Process ID: 22597
+[12:12:48][23352]fastcgi begin
+[12:12:48][23353]fastcgi begin
+[12:12:48][23354]fastcgi begin
+[12:13:10][23354]----Request number 1 running on host 10.1.1.197 Process ID: 23354
+[12:27:29][23354]----Request number 2 running on host 10.1.1.197 Process ID: 23354
+[12:35:27][26527]fastcgi begin
+[12:35:27][26528]fastcgi begin
+[12:35:27][26529]fastcgi begin
+[12:35:53][26529]----Request number 1 running on host 10.1.1.197 Process ID: 26529
+[12:35:53][26529][143]Deleteing picture g01/M00/00/01/CgEBxVyu5smAI_0EAA7dujqtKKw548_256x256.png ...
+[13:31:31][26529]----Request number 2 running on host 10.1.1.197 Process ID: 26529
+[13:31:33][26529]----Request number 3 running on host 10.1.1.197 Process ID: 26529

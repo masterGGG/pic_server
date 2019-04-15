@@ -1,0 +1,146 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.7	//
+ALERT_LOG	log.h	174;"	d
+ALERT_LOG	log.h	179;"	d
+BOOT_FAIL	log.c	252;"	d	file:
+BOOT_LOG	log.h	338;"	d
+BOOT_LOG2	log.h	349;"	d
+BOOT_OK	log.c	251;"	d	file:
+CC	Makefile	/^CC = g++$/;"	m
+CFLAGS	Makefile	/^CFLAGS  = -Wall -pipe -DDEBUG -g -D_GNU_SOURCE -D_FASTCGI$/;"	m
+CGI_DEBUG_LOG	log.h	302;"	d
+CGI_DEBUG_LOG	log.h	307;"	d
+CGI_ERROR_LOG	log.h	217;"	d
+CGI_ERROR_LOG	log.h	222;"	d
+CGI_INFO_LOG	log.h	281;"	d
+CGI_INFO_LOG	log.h	286;"	d
+CRIT_LOG	log.h	196;"	d
+CRIT_LOG	log.h	201;"	d
+DEBUG_RETURN	log.h	404;"	d
+DEBUG_RETURN_VOID	log.h	415;"	d
+DETAIL	log.h	127;"	d
+DETAIL	log.h	130;"	d
+EMERG_LOG	log.h	153;"	d
+EMERG_LOG	log.h	158;"	d
+ERROR_RETURN	log.h	360;"	d
+ERROR_RETURN_VOID	log.h	371;"	d
+INCLUDE	Makefile	/^INCLUDE = -I\/usr\/include\/glib-2.0 -I\/usr\/lib\/glib-2.0\/include\/ -I\/usr\/include\/libxml2 \\$/;"	m
+KALERT_LOG	log.h	176;"	d
+KALERT_LOG	log.h	180;"	d
+KCGI_DEBUG_LOG	log.h	304;"	d
+KCGI_DEBUG_LOG	log.h	308;"	d
+KCGI_ERROR_LOG	log.h	219;"	d
+KCGI_ERROR_LOG	log.h	223;"	d
+KCRIT_LOG	log.h	198;"	d
+KCRIT_LOG	log.h	202;"	d
+KEMERG_LOG	log.h	155;"	d
+KEMERG_LOG	log.h	159;"	d
+KINFO_LOG	log.h	283;"	d
+KINFO_LOG	log.h	287;"	d
+KNOTI_LOG	log.h	262;"	d
+KNOTI_LOG	log.h	266;"	d
+KTRACE_LOG	log.h	326;"	d
+KTRACE_LOG	log.h	330;"	d
+KWARN_LOG	log.h	241;"	d
+KWARN_LOG	log.h	245;"	d
+LIB	Makefile	/^LIB 	= -L\/usr\/local\/lib -ldl -lrt -ltaomee++ -ltaomee -lfcgi -lfastcommon -lfdfsclient -lgd$/;"	m
+LIBTAOMEE_LOG_H_	log.h	18;"	d
+MAX_LOG_CNT	log.c	29;"	d	file:
+NOTI_LOG	log.h	260;"	d
+NOTI_LOG	log.h	265;"	d
+OO	Makefile	/^OO	= log.o download_fcgi.o$/;"	m
+SCREEN_COLS	log.c	250;"	d	file:
+SHIFT_FD_LOCK	log.c	64;"	d	file:
+SHIFT_FD_UNLOCK	log.c	68;"	d	file:
+SIMPLY	log.h	135;"	d
+SIMPLY	log.h	138;"	d
+TARGETS	Makefile	/^TARGETS = download.fcgi$/;"	m
+TRACE_LOG	log.h	324;"	d
+TRACE_LOG	log.h	329;"	d
+WARN_LOG	log.h	239;"	d
+WARN_LOG	log.h	244;"	d
+WARN_RETURN	log.h	382;"	d
+WARN_RETURN_VOID	log.h	393;"	d
+base_filename	log.c	/^	char	base_filename[64];$/;"	m	struct:fds_t	file:	access:public
+base_filename_len	log.c	/^	int		base_filename_len;$/;"	m	struct:fds_t	file:	access:public
+boot_log	log.c	/^void boot_log(int ok, int dummy, const char *fmt, ...)$/;"	f	signature:(int ok, int dummy, const char *fmt, ...)
+boot_log	log.h	/^void boot_log(int ok, int dummy, const char* fmt, ...);$/;"	p	signature:(int ok, int dummy, const char* fmt, ...)
+cgi_log_init	log.c	/^int cgi_log_init(const char* dir, log_lvl_t lvl, uint32_t size, int maxfiles, const char* pre_name)$/;"	f	signature:(const char* dir, log_lvl_t lvl, uint32_t size, int maxfiles, const char* pre_name)
+cgi_log_init	log.h	/^int  cgi_log_init(const char* dir, log_lvl_t lvl, uint32_t size, int maxfiles, const char* pre_name);$/;"	p	signature:(const char* dir, log_lvl_t lvl, uint32_t size, int maxfiles, const char* pre_name)
+color_end	log.c	/^static const char* color_end = "\\e[m";$/;"	v	file:
+day	log.c	/^	int		day;$/;"	m	struct:fds_t	file:	access:public
+enable_multi_thread	log.c	/^void enable_multi_thread()$/;"	f
+enable_multi_thread	log.h	/^void enable_multi_thread();$/;"	p	signature:()
+fdfs_download_file	download_fcgi.c	/^int fdfs_download_file(const char fdfs_url[FDFS_URL_LEN], char **file_buff, $/;"	f	signature:(const char fdfs_url[FDFS_URL_LEN], char **file_buff, int64_t *file_size)
+fdfs_fini	download_fcgi.c	/^void fdfs_fini()$/;"	f
+fdfs_init	download_fcgi.c	/^int fdfs_init()$/;"	f
+fds_info	log.c	/^} fds_info[log_lvl_max];$/;"	v	typeref:struct:fds_t	file:
+fds_t	log.c	/^static struct fds_t {$/;"	s	file:
+fds_t::base_filename	log.c	/^	char	base_filename[64];$/;"	m	struct:fds_t	file:	access:public
+fds_t::base_filename_len	log.c	/^	int		base_filename_len;$/;"	m	struct:fds_t	file:	access:public
+fds_t::day	log.c	/^	int		day;$/;"	m	struct:fds_t	file:	access:public
+fds_t::opfd	log.c	/^	int		opfd;$/;"	m	struct:fds_t	file:	access:public
+fds_t::seq	log.c	/^	int		seq;$/;"	m	struct:fds_t	file:	access:public
+g_log_dest	log.c	/^static log_dest_t g_log_dest = log_dest_terminal; \/\/ write log to terminal by default$/;"	v	file:
+g_multi_thread	log.c	/^static int g_multi_thread;$/;"	v	file:
+g_shift_fd_mutex	log.c	/^static pthread_mutex_t g_shift_fd_mutex = PTHREAD_MUTEX_INITIALIZER;$/;"	v	file:
+get_log_seq_nonrecycle	log.c	/^get_log_seq_nonrecycle(int lvl)$/;"	f	file:	signature:(int lvl)
+get_log_seq_recycle	log.c	/^get_log_seq_recycle(int lvl)$/;"	f	file:	signature:(int lvl)
+get_logfile_seqno	log.c	/^get_logfile_seqno(const char* filename, int loglvl)$/;"	f	file:	signature:(const char* filename, int loglvl)
+get_para_from_url	download_fcgi.c	/^int get_para_from_url(const char *req_url, uint32_t *download_cmd, $/;"	f	signature:(const char *req_url, uint32_t *download_cmd, uint32_t *image_type, char fdfs_url[FDFS_URL_LEN], thumb_param_t *tp)
+h	download_fcgi.c	/^    uint32_t h;$/;"	m	struct:thumb_param_t	file:	access:public
+has_init	log.c	/^static int has_init;$/;"	v	file:
+likely	log.c	20;"	d	file:
+likely	log.c	22;"	d	file:
+log_buf_sz	log.c	/^	log_buf_sz	= 8192$/;"	e	enum:__anon1	file:
+log_color	log.c	/^static const char* log_color[] = {$/;"	v	file:
+log_dest	log.h	/^typedef enum log_dest {$/;"	g
+log_dest_both	log.h	/^	log_dest_both		= 3$/;"	e	enum:log_dest
+log_dest_file	log.h	/^	log_dest_file		= 2,$/;"	e	enum:log_dest
+log_dest_t	log.h	/^} log_dest_t;$/;"	t	typeref:enum:log_dest
+log_dest_terminal	log.h	/^	log_dest_terminal	= 1,$/;"	e	enum:log_dest
+log_dir	log.c	/^static char log_dir[256];$/;"	v	file:
+log_file_name	log.c	/^log_file_name(int lvl, int seq, char* file_name, const struct tm* tm)$/;"	f	file:	signature:(int lvl, int seq, char* file_name, const struct tm* tm)
+log_file_path	log.c	/^log_file_path(int lvl, int seq, char* file_name, const struct tm* tm)$/;"	f	file:	signature:(int lvl, int seq, char* file_name, const struct tm* tm)
+log_init_t	log.h	/^int log_init_t(const char* dir, log_lvl_t lvl, const char* pre_name, int logtime);$/;"	p	signature:(const char* dir, log_lvl_t lvl, const char* pre_name, int logtime)
+log_level	log.c	/^static log_lvl_t  log_level	 = log_lvl_debug;	  \/\/ default log level$/;"	v	file:
+log_lvl	log.h	/^typedef enum log_lvl {$/;"	g
+log_lvl_alert	log.h	/^	log_lvl_alert,$/;"	e	enum:log_lvl
+log_lvl_crit	log.h	/^	log_lvl_crit,$/;"	e	enum:log_lvl
+log_lvl_debug	log.h	/^	log_lvl_debug,$/;"	e	enum:log_lvl
+log_lvl_emerg	log.h	/^	log_lvl_emerg,$/;"	e	enum:log_lvl
+log_lvl_error	log.h	/^	log_lvl_error,$/;"	e	enum:log_lvl
+log_lvl_info	log.h	/^	log_lvl_info,$/;"	e	enum:log_lvl
+log_lvl_max	log.h	/^	log_lvl_max$/;"	e	enum:log_lvl
+log_lvl_notice	log.h	/^	log_lvl_notice,$/;"	e	enum:log_lvl
+log_lvl_t	log.h	/^} log_lvl_t;$/;"	t	typeref:enum:log_lvl
+log_lvl_trace	log.h	/^	log_lvl_trace,$/;"	e	enum:log_lvl
+log_lvl_warning	log.h	/^	log_lvl_warning,$/;"	e	enum:log_lvl
+log_pre	log.c	/^static char log_pre[32];$/;"	v	file:
+log_size	log.c	/^static uint32_t log_size;$/;"	v	file:
+lognames	log.c	/^static const char* lognames[] = { "emerg", "alert", "crit", "error",$/;"	v	file:
+main	download_fcgi.c	/^int main(void)$/;"	f	signature:(void)
+max_log_files	log.c	/^static int max_log_files;$/;"	v	file:
+open_fd	log.c	/^open_fd(int lvl, const struct tm* tm)$/;"	f	file:	signature:(int lvl, const struct tm* tm)
+opfd	log.c	/^	int		opfd;$/;"	m	struct:fds_t	file:	access:public
+print_http_head	download_fcgi.c	/^void print_http_head(uint32_t contentType, uint32_t status, $/;"	f	signature:(uint32_t contentType, uint32_t status, const char *str, const char *last_modify_time)
+request_log_seq	log.c	/^request_log_seq(int lvl)$/;"	f	file:	signature:(int lvl)
+rm_files_by_seqno	log.c	/^rm_files_by_seqno(int loglvl, int seqno, const struct tm* tm)$/;"	f	file:	signature:(int loglvl, int seqno, const struct tm* tm)
+seq	log.c	/^	int		seq;$/;"	m	struct:fds_t	file:	access:public
+set_log_dest	log.c	/^void set_log_dest(log_dest_t dest)$/;"	f	signature:(log_dest_t dest)
+set_log_dest	log.h	/^void set_log_dest(log_dest_t dest);$/;"	p	signature:(log_dest_t dest)
+shift_fd	log.c	/^static int shift_fd(int lvl, const struct tm* tm)$/;"	f	file:	signature:(int lvl, const struct tm* tm)
+thumb_param_t	download_fcgi.c	/^struct thumb_param_t {$/;"	s	file:
+thumb_param_t::h	download_fcgi.c	/^    uint32_t h;$/;"	m	struct:thumb_param_t	file:	access:public
+thumb_param_t::w	download_fcgi.c	/^    uint32_t w;$/;"	m	struct:thumb_param_t	file:	access:public
+unlikely	log.c	25;"	d	file:
+unlikely	log.c	27;"	d	file:
+w	download_fcgi.c	/^    uint32_t w;$/;"	m	struct:thumb_param_t	file:	access:public
+write_log	log.c	/^void write_log(int lvl, uint32_t key, const char *fmt, ...)$/;"	f	signature:(int lvl, uint32_t key, const char *fmt, ...)
+write_log	log.h	/^extern void write_log(int lvl,uint32_t key, const char* fmt, ...);$/;"	p	signature:(int lvl,uint32_t key, const char* fmt, ...)
+write_syslog	log.c	/^void write_syslog(int lvl, const char* fmt, ...)$/;"	f	signature:(int lvl, const char* fmt, ...)
+write_syslog	log.h	/^extern void write_syslog(int lvl, const char* fmt, ...);$/;"	p	signature:(int lvl, const char* fmt, ...)
