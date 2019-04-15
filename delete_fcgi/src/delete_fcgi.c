@@ -85,10 +85,26 @@ int fdfs_delete_file()
     char *prefix = config_get_strval("thumb_square_size");
     memset(g_filename, 0, sizeof(g_filename));
     memset(g_square_filename, 0, sizeof(g_square_filename));
-    if (nullptr == (p = strrchr(g_nail_filename, '_'))) {
-        CGI_ERROR_LOG("storage_delete_file failed, can not parse picture url split by _");
-        g_errorid = DEL_HANDLE_INVALID_PARA;
+    
+    ConnectionInfo *p_tracker_server = tracker_get_connection();
+    if (p_tracker_server == NULL) {
+        g_errorid = DEL_HANDLE_FDFS_ERR;
+        CGI_ERROR_LOG("tracker_get_connection fail");
         return FAIL;
+    }
+    
+    result = storage_delete_file1(p_tracker_server, NULL, g_nail_filename);
+    if (result != 0) {
+        g_errorid = DEL_HANDLE_NAIL_ERR;
+        CGI_ERROR_LOG("storage_delete_file1 nail file %s fail: errorno[%d] %s", \
+                      g_nail_filename, result, STRERROR(result));
+        return FAIL;
+    }
+
+    if (nullptr == (p = strrchr(g_nail_filename, '_'))) {
+        CGI_ERROR_LOG("storage_delete_file failed, can not parse picture url <%s> split by _", g_nail_filename);
+        //g_errorid = DEL_HANDLE_INVALID_PARA;
+        return SUCC;
     }
     int len = p - g_nail_filename;
     memcpy(g_filename, g_nail_filename, len);
@@ -99,27 +115,12 @@ int fdfs_delete_file()
         return FAIL;
     }
     memcpy(g_filename+len, p, strlen(p));
-    
-    ConnectionInfo *p_tracker_server = tracker_get_connection();
-    if (p_tracker_server == NULL) {
-        g_errorid = DEL_HANDLE_FDFS_ERR;
-        CGI_ERROR_LOG("tracker_get_connection fail");
-        return FAIL;
-    }
 
     result = storage_delete_file1(p_tracker_server, NULL, g_filename);
     if (result != 0) {
         CGI_ERROR_LOG("storage_delete_file1 delete source url%s fail: errorno[%d] %s", \
                       g_filename, result, STRERROR(result));
         g_errorid = DEL_HANDLE_SOURCE_ERR;
-        return FAIL;
-    }
-
-    result = storage_delete_file1(p_tracker_server, NULL, g_nail_filename);
-    if (result != 0) {
-        g_errorid = DEL_HANDLE_NAIL_ERR;
-        CGI_ERROR_LOG("storage_delete_file1 nail file %s fail: errorno[%d] %s", \
-                      g_nail_filename, result, STRERROR(result));
         return FAIL;
     }
 
