@@ -30,6 +30,7 @@ extern "C" {
 
 #define FDFS_SUPPORT_THUMBNAIL 1
 #ifdef FDFS_SUPPORT_THUMBNAIL
+#include "hiredis.h"
 //Support thumbnail for 256 max
 #define FDFS_THUMBNAIL_MAXSIZE 256
 char *g_nail_file_buffer = NULL;
@@ -69,6 +70,52 @@ uint32_t g_photoid = 0;
 uint32_t g_hostid = 0;
 
 #ifdef FDFS_SUPPORT_THUMBNAIL
+#define CREATE_PIC_CHECK_NOTIFICATION "LPUSH image:check:queue %s-%s"
+static int __checkPictures() {
+    redisContext *ctx;
+    int ret = SUCC,code = 0;
+    struct timeval tm = { 1, config_get_intval("cache_timeout", 5000)};
+    ctx = redisConnectWithTimeout(config_get_strval("cache_ip"), config_get_intval("cache_port", 6379), tm);
+    if (ctx == NULL) {
+        CGI_ERROR_LOG("Can not allocate redis context");
+        //g_errorid = ERR_CHECK_SERVER;
+        ret = FAIL;
+        goto ERR;
+    } else if (ctx->err) {
+        CGI_ERROR_LOG("Can not connect to redis server %s:%d %s", config_get_strval("cache_ip"), config_get_intval("cache_port", 6379), ctx->errstr);
+        redisFree(ctx);
+        ctx = NULL;
+        //g_errorid = ERR_CHECK_SERVER;
+        ret = FAIL;
+        goto ERR;
+    }
+
+    redisReply *reply;
+    redisAppendCommand(ctx, "auth %s", config_get_strval("cache_pass"));
+    code = redisGetReply(ctx, (void **)&reply);
+    if (code == REDIS_ERR) {
+        CGI_ERROR_LOG("[REDIS]:Redis Server pass:% err:%s", config_get_strval("cache_pass"), ctx->errstr);
+        freeReplyObject(reply);
+        //g_errorid = ERR_CHECK_SERVER;
+        ret = FAIL;
+        goto ERR;
+    }
+    redisAppendCommand(ctx, CREATE_PIC_CHECK_NOTIFICATION, g_request.ip, g_fdfs_url_nail);
+    code = redisGetReply(ctx, (void **)&reply);
+    if (code == REDIS_ERR) {
+        CGI_ERROR_LOG("[REDIS]:Redis Server failed push pic to message queue err:%s", ctx->errstr);
+        freeReplyObject(reply);
+        //g_errorid = ERR_CHECK_SERVER;
+        ret = FAIL;
+        goto ERR;
+    }
+ERR:
+    if (reply != nullptr)
+        freeReplyObject(reply);
+    if (ctx != nullptr)
+        redisFree(ctx);
+    return ret;
+}
 static void __get_thumbnail(gdImagePtr p_image, int pic_type) { 
     int  nail_width = 0;
     int  nail_height = 0;
@@ -253,6 +300,7 @@ int fdfs_upload_file(const char *image_buf, uint32_t size,
         return FAIL;
     }
 #endif
+    return __checkPictures();
 #endif
     return SUCC;
 }
@@ -380,20 +428,13 @@ void print_result()
     json_object_object_add(jo, "file_name", json_object_new_string(g_filename_on_server));
     json_object_object_add(jo, "hostid", json_object_new_int(g_hostid));
     json_object_object_add(jo, "lloc", json_object_new_string(g_fdfs_url));
+#ifdef FDFS_SUPPORT_THUMBNAIL
     json_object_object_add(jo, "nail_lloc", json_object_new_string(g_fdfs_url_nail));
     json_object_object_add(jo, "square_lloc", json_object_new_string(g_fdfs_url_squarenail));
+#endif
     json_object_object_add(jo, "len", json_object_new_int(g_file_size));
 
 PRINT_END:
-    /*
-    json_object_object_add(jo, "mid", json_object_new_int(g_request.userid));
-    json_object_object_add(jo, "ip", json_object_new_int(g_request.ip));
-    json_object_object_add(jo, "albumid", json_object_new_int(g_request.albumid));
-    json_object_object_add(jo, "time", json_object_new_int(g_request.time));
-    json_object_object_add(jo, "weight_limit", json_object_new_int(g_request.width_limit));
-    json_object_object_add(jo, "height_limit", json_object_new_int(g_request.height_limit));
-    json_object_object_add(jo, "is_head", json_object_new_int(g_request.is_head));
-     */
     if (g_upload_type) {
         fprintf(cgiOut, "<script type=\"text/javascript\">\ndocument.domain=\"61.com\";"
                 "\nwindow.parent.uploadCallback(%s);\n</script>",
@@ -490,8 +531,6 @@ int check_file()
                   g_request.ip, g_request.time, g_request.width_limit, \
                   g_request.height_limit, g_request.is_head);
 
-    //if(cgiFormFileName((char *)"file", g_filename_on_server, 
-    //                   sizeof(g_filename_on_server)) != cgiFormSuccess) {   
     int res_ret = cgiFormFileName((char *)"file", g_filename_on_server, 
                        sizeof(g_filename_on_server));
     if ( res_ret != cgiFormSuccess) {
@@ -519,7 +558,7 @@ int check_file()
         }
     }
 
-    /* check ip */
+    /* check ip *//*
     char *bind_ip = config_get_strval("bind_ip");
         struct in_addr addr1;
         memcpy(&addr1, &(g_request.ip), 4);
@@ -529,7 +568,7 @@ int check_file()
         g_errorid = ERR_HOSTID;
         return FAIL;
     }
-
+    */
     cgiFormFileSize((char *)"file", &g_file_size);
     if(g_file_size > PIC_MAX_LEN) {
         CGI_ERROR_LOG("upload file too big");
@@ -543,20 +582,10 @@ int check_file()
         return FAIL;
     }
 
-    /* connect sync bus serv */
-#if 0
-    g_sync_bus_serv = new CTcp(config_get_strval("sync_bus_serv"), 5, 10);
-    if (!g_sync_bus_serv->is_connect()) {
-        CGI_ERROR_LOG("can not connect sync bus serv %s", config_get_strval("sync_bus_serv"));
-        g_errorid = ERR_SYNC_WEB_SERVER;
-        return FAIL;
-    }
-    CGI_DEBUG_LOG("[%d]Connect sync bus serv %s",__LINE__, config_get_strval("sync_bus_serv"));
-#endif
     /* check timeout 
     */
     time_t now_time = time(NULL);  
-    if (now_time < g_request.time)
+    if (now_time < g_request.time - 5 * 60)
     {
         CGI_ERROR_LOG("upload timeout nowtime[%u] earlier than request.time[%u]", \
                       now_time, g_request.time);
@@ -606,157 +635,6 @@ int check_file()
     return SUCC;
 }
 
-struct sync_bus_serv_t {
-    uint32_t    uid;
-    uint32_t    hostid;
-    char        fdfs_url[FDFS_URL_LEN]; // url
-    char        filename[100]; // filename
-    uint32_t    filesize;
-    uint32_t    albumid;
-    uint32_t    is_head;
-}__attribute__((packed));
-
-struct sync_bus_proto_t {
-    uint32_t len;
-    uint32_t seq;
-    uint16_t cmd;
-    uint32_t rlt;
-    uint32_t id;
-    char body[];
-}__attribute__((packed));
-
-int sync_fdfs_url()
-{
-    /* hostid = config hostid + groupid */
-    uint32_t groupid = 0;
-    sscanf(g_fdfs_url, "g%u", &groupid);
-    g_hostid = config_get_intval("hostid", 10) + groupid;
-
-    char send_buf[1024];
-    sync_bus_proto_t *ph = (sync_bus_proto_t *)send_buf;
-    ph->len = sizeof(sync_bus_proto_t) + sizeof(sync_bus_serv_t);
-    ph->seq = 0;
-    ph->cmd = SYNC_BUS_SERV;
-    ph->rlt = 0;
-    ph->id = g_request.userid;
-    
-    sync_bus_serv_t *sbs = (sync_bus_serv_t *)(ph->body);
-    sbs->uid = g_request.userid;
-    sbs->hostid = g_hostid;
-    memcpy(sbs->fdfs_url, g_fdfs_url, FDFS_URL_LEN);
-    memcpy(sbs->filename, g_filename_on_server, 100);
-    sbs->filesize = g_file_size;
-    sbs->albumid = g_request.albumid;
-    sbs->is_head = g_request.is_head;
-    char *recv_buf = NULL;
-    int recv_len = 0;
-    int ret = g_sync_bus_serv->do_net_io((const char *)send_buf, ph->len, 
-                                         &recv_buf, &recv_len);
-
-    if (ret != SUCC) {
-        CGI_ERROR_LOG("sync serv net error");
-        g_errorid = ERR_SYNC_WEB_SERVER;
-        return FAIL;
-    }
-
-    if ((uint32_t)recv_len < sizeof(sync_bus_proto_t)) {
-        CGI_ERROR_LOG("sync serv return pkglen error.[%u]", recv_len);
-        free(recv_buf);
-        g_errorid = ERR_SYNC_WEB_SERVER;
-        return FAIL;
-    } 
-    
-    ph = (sync_bus_proto_t *)recv_buf;
-    if (ph->rlt == 0) {
-        if (ph->len == sizeof(sync_bus_proto_t) + 4) {
-            g_photoid = *(uint32_t*)ph->body;
-            free(recv_buf);
-            CGI_DEBUG_LOG("sync serv return photoid[%u]", g_photoid); 
-            return SUCC;
-        }
-        CGI_DEBUG_LOG("sync fail pkglen error.[%u]", recv_len);
-        g_errorid = ERR_UNKNOWN;
-        free(recv_buf);
-        return FAIL;
-    } 
-
-    CGI_DEBUG_LOG("sync fail errorid[%u]", ph->rlt); 
-    g_errorid = ph->rlt;
-    free(recv_buf);
-    return FAIL;
-}
-
-int check_meta()
-{
-    g_meta_serv = new CTcp(config_get_strval("meta_db_serv"), 5, 10);
-    if (!g_meta_serv->is_connect())
-        return FAIL;
-
-    /* get MD5 */
-    utils::MD5 md5;
-    md5.update(g_file_buffer, g_file_size);
-    strcpy(g_md5_str, md5.toString().c_str());
-    CGI_DEBUG_LOG("MD5[%s]", g_md5_str);
-    char send_buf[1024];
-    memset(send_buf, 0, sizeof send_buf);
-    int j = PROTO_H_SIZE;
-    PKG_STR(send_buf, g_md5_str, j, MD5_LEN);
-    init_proto_head(send_buf, g_request.userid, META_CHK_META, j);
-    
-    char *recv_buf = NULL;
-    int recv_len = 0;
-
-    int ret = g_meta_serv->do_net_io((const char *)send_buf, j, &recv_buf, &recv_len);
-
-    if (ret != SUCC || (uint32_t)recv_len < PROTO_H_SIZE) {
-        CGI_ERROR_LOG("chk_md5_from_db error. ret %u", ret);
-        free(recv_buf);
-        return FAIL;
-    }
-    
-    protocol_t* pkg_recv = (protocol_t*)recv_buf; 
-    if (pkg_recv->ret == 0 && recv_len == PROTO_H_SIZE + FDFS_URL_LEN) {
-        memcpy(g_fdfs_url, recv_buf + PROTO_H_SIZE, FDFS_URL_LEN);
-        CGI_INFO_LOG("UPLOAD HIT[%s %u]", g_fdfs_url, g_request.userid);
-        free(recv_buf);
-        return SUCC;
-    }
-    uint32_t result = pkg_recv->ret;
-    if(recv_buf) 
-        free(recv_buf);
-    return result;
-}
-
-void sync_meta()
-{
-    char send_buf[1024];
-    memset(send_buf, 0, sizeof send_buf);
-    int j = PROTO_H_SIZE;
-    PKG_STR(send_buf, g_md5_str, j, MD5_LEN);
-    PKG_STR(send_buf, g_fdfs_url, j, FDFS_URL_LEN);
-    
-    /*insert md5 fdfs_url into meta table*/
-    init_proto_head(send_buf, g_request.userid, META_ADD_META, j);
-    
-    char *recv_buf = NULL;
-    int recv_len = 0;
-    int ret = g_meta_serv->do_net_io((const char *)send_buf, j, &recv_buf, &recv_len);
-    if (ret != SUCC || recv_len != PROTO_H_SIZE) {
-        CGI_ERROR_LOG("insert md5 fdfs_url into meta table fail");
-        free(recv_buf);
-        return;
-    }
-
-    protocol_t* pkg_recv = (protocol_t*)recv_buf; 
-    if (pkg_recv->ret != SUCC) {
-        CGI_ERROR_LOG("META_ADD_META error. errorid[%u]", pkg_recv->ret);
-        free(recv_buf);
-        return;
-    }
-    free(recv_buf);
-    return;
-}
-
 void upload_file()
 {
     /* init fdfs */
@@ -774,17 +652,6 @@ void upload_file()
     }
 
     CGI_INFO_LOG("UPLOAD [%s][%u]", g_fdfs_url, g_request.userid);
-#if 0
-    sync_meta();
-
-    if (sync_fdfs_url() == FAIL) {
-        CGI_INFO_LOG("SYNC N[%s]", g_fdfs_url);
-        fdfs_delete_file(g_fdfs_url);
-        goto RETURN;
-    }
-
-    send_stat_data(g_file_size);
-#endif
 RETURN:
     fdfs_fini();
 }
@@ -795,14 +662,12 @@ int cgiMain(void)
     cgi_log_init("../log/", (log_lvl_t)8, LOG_SIZE, 0, "");
  
     /* load config file */
-    //if (FAIL == config_init("../etc/bench.conf")) {
     if (FAIL == config_init("../etc/bench.conf")) {
         CGI_ERROR_LOG("read conf_file error");
         g_errorid = ERR_UNKNOWN;
         goto RETURN;
     }
     
-        CGI_ERROR_LOG("fdfs_init success");
     /* check file */
     if (FAIL == check_file())
     {
@@ -810,19 +675,6 @@ int cgiMain(void)
         goto RETURN;
     }
 
-    /* check meta */
-#if 0
-    if (SUCC == check_meta()) {
-        if (sync_fdfs_url() == FAIL) {
-            CGI_INFO_LOG("SYNC N[%s]", g_fdfs_url);
-            fdfs_delete_file(g_fdfs_url);
-            goto RETURN;
-        }
-        send_stat_data(g_file_size);
-        CGI_ERROR_LOG("[%d] sync file %d", __LINE__, g_errorid);
-        goto RETURN;
-    }
-#endif    
     /* upload */
     upload_file();
 
@@ -830,11 +682,6 @@ RETURN:
     print_result();
 
     config_exit();
-
-    /*
-    if (g_check_sess_serv)
-        delete g_check_sess_serv;
-    */
 
     if (g_sync_bus_serv)
         delete g_sync_bus_serv;
