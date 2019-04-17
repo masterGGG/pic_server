@@ -100,7 +100,12 @@ static int __checkPictures() {
         ret = FAIL;
         goto ERR;
     }
-    redisAppendCommand(ctx, CREATE_PIC_CHECK_NOTIFICATION, g_request.ip, g_fdfs_url_nail);
+    char query[256];
+    struct in_addr addr1;
+    memcpy(&addr1, &(g_request.ip), 4);
+
+    snprintf(query, sizeof(query), CREATE_PIC_CHECK_NOTIFICATION, inet_ntoa(addr1), g_fdfs_url_nail);
+    redisAppendCommand(ctx, query);
     code = redisGetReply(ctx, (void **)&reply);
     if (code == REDIS_ERR) {
         CGI_ERROR_LOG("[REDIS]:Redis Server failed push pic to message queue err:%s", ctx->errstr);
@@ -155,6 +160,10 @@ static void __get_squarenail(gdImagePtr p_image, int pic_type) {
     int srcw = gdImageSX(p_image), srch = gdImageSY(p_image), srcx = 0, srcy = 0;
     int dstw = FDFS_SQUARENAIL_MAXSIZE, dsth = FDFS_SQUARENAIL_MAXSIZE;
     int dstx = 0, dsty = 0;
+    snprintf(g_square_suffix, sizeof(g_square_suffix), "_%dx%d", FDFS_SQUARENAIL_MAXSIZE, FDFS_SQUARENAIL_MAXSIZE);
+    if ((srcw = 2 * dstw) && (srch == dsth * 2)) {
+        return ;
+    }
 
     if (srcw > FDFS_SQUARENAIL_MAXSIZE && srch > FDFS_SQUARENAIL_MAXSIZE) {
         //pic is bigger than 128 * 128 ,need to nail first
@@ -187,7 +196,6 @@ static void __get_squarenail(gdImagePtr p_image, int pic_type) {
     p_nail_image = gdImageCreateTrueColor(FDFS_SQUARENAIL_MAXSIZE, FDFS_SQUARENAIL_MAXSIZE);
     gdImageCopyResampled(p_nail_image, p_image, dstx, dsty, srcx, srcy, dstw, dsth, srcw, srch);
     
-    snprintf(g_square_suffix, sizeof(g_square_suffix), "_%dx%d", FDFS_SQUARENAIL_MAXSIZE, FDFS_SQUARENAIL_MAXSIZE);
     switch (pic_type) {
     case TYPE_JPG:
         g_square_file_buffer = (char *)gdImageJpegPtr(p_nail_image, &g_square_file_size, -1);
@@ -206,15 +214,20 @@ static void __get_squarenail(gdImagePtr p_image, int pic_type) {
 
 int fdfs_init()
 {
+#ifdef DEBUG
+    CGI_DEBUG_LOG("[%d] fdfs init ing...", __LINE__);
+#endif
     /* fdfs log init*/
     log_init_fdfsx();
     g_log_context.log_level = LOG_ERR;
 
-    //if (fdfs_client_init("../../client.conf") != 0) {
-    if (fdfs_client_init("../../client.conf") != 0) {
-        CGI_ERROR_LOG("fdfs_client_init ../../client.conf");
+    if (fdfs_client_init(config_get_strval("conf_filename")) != 0) {
+        CGI_ERROR_LOG("fdfs_client_init %s", config_get_strval("conf_filename"));
         return FAIL;
     }
+#ifdef DEBUG
+    CGI_DEBUG_LOG("[%d] fdfs init success.", __LINE__);
+#endif
 
     return SUCC;
 }
@@ -285,20 +298,23 @@ int fdfs_upload_file(const char *image_buf, uint32_t size,
     }
     
 #ifdef FDFS_SUPPORT_SQUARENAIL
-    result = storage_upload_slave_by_filebuff1(p_tracker_server,
-                                         &storage_server,
-                                         g_square_file_buffer, g_square_file_size, fdfs_url, g_square_suffix, suffix,
-                                         NULL, 0, g_fdfs_url_squarenail);
-    if (result != 0)
-    {
-        CGI_ERROR_LOG("storage_upload_slave_by_filebuff1 fail, errorno");
-        if (storage_server.sock >= 0) {
-            fdfs_quit(&storage_server);
-        }
+    if (0 != strcmp(g_square_suffix, g_nail_suffix)) {
+        result = storage_upload_slave_by_filebuff1(p_tracker_server,
+                                             &storage_server,
+                                             g_square_file_buffer, g_square_file_size, fdfs_url, g_square_suffix, suffix,
+                                             NULL, 0, g_fdfs_url_squarenail);
+        if (result != 0)
+        {
+            CGI_ERROR_LOG("storage_upload_slave_by_filebuff1 fail, errorno");
+            if (storage_server.sock >= 0) {
+                fdfs_quit(&storage_server);
+            }
 
-        tracker_disconnect_server(&storage_server);
-        return FAIL;
-    }
+            tracker_disconnect_server(&storage_server);
+            return FAIL;
+        }
+    } else 
+        strcpy(g_fdfs_url_squarenail, g_fdfs_url_nail);
 #endif
     return __checkPictures();
 #endif
@@ -498,8 +514,9 @@ int check_file()
         g_errorid = ERR_SESSION_KEY;
         return FAIL;
     }
+#ifdef DEBUG
     CGI_DEBUG_LOG("session_key is : %s", session_key);
-
+#endif
     /* check upload request */
     char upload_s_tmp[256];
     char d_tmp[256];
@@ -526,11 +543,12 @@ int check_file()
     UNPKG_H_UINT32(d_tmp, g_request.width_limit, j);
     UNPKG_H_UINT32(d_tmp, g_request.height_limit, j);
     UNPKG_H_UINT32(d_tmp, g_request.is_head, j);
+#ifdef DEBUG
     CGI_DEBUG_LOG("UPLOAD_REQUEST[uid:%u ch:%u alb:%u ip:%u time:%u w_lim:%u h_lim:%u is_head:%u]", 
                   g_request.userid, g_request.channel, g_request.albumid, \
                   g_request.ip, g_request.time, g_request.width_limit, \
                   g_request.height_limit, g_request.is_head);
-
+#endif
     int res_ret = cgiFormFileName((char *)"file", g_filename_on_server, 
                        sizeof(g_filename_on_server));
     if ( res_ret != cgiFormSuccess) {
