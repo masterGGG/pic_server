@@ -185,7 +185,7 @@ static void __get_squarenail(gdImagePtr p_image, int pic_type) {
             //原图高度大于128，则从中心位置裁剪出128的高度
             srcy = (srch - dsth) / 2;
             srch = dsth;
-        } else {
+        } else { 
             dsty = (dsth - srch) / 2;        //原图高度小于128，设定画板填充高度的起始位置
             dsth = srch;
         }
@@ -194,6 +194,13 @@ static void __get_squarenail(gdImagePtr p_image, int pic_type) {
     //初始化九宫格画板
     gdImagePtr p_nail_image;
     p_nail_image = gdImageCreateTrueColor(FDFS_SQUARENAIL_MAXSIZE, FDFS_SQUARENAIL_MAXSIZE);
+
+    //设置保存PNG时保留透明通道信息
+    gdImageSaveAlpha(p_nail_image, true);
+    //拾取一个完全透明的颜色,最后一个参数127为全透明
+    int color = gdImageColorAllocateAlpha(p_nail_image, 255, 255, 255, 127);
+    //使用颜色通道填充，背景色透明
+    gdImageFill(p_nail_image, 0, 0, color);
     gdImageCopyResampled(p_nail_image, p_image, dstx, dsty, srcx, srcy, dstw, dsth, srcw, srch);
     
     switch (pic_type) {
