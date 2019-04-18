@@ -139,6 +139,12 @@ static void __get_thumbnail(gdImagePtr p_image, int pic_type) {
 
     gdImagePtr p_nail_image;
     p_nail_image = gdImageCreateTrueColor(nail_width, nail_height);
+    //设置保存PNG时保留透明通道信息
+    gdImageSaveAlpha(p_nail_image, true);
+    //拾取一个完全透明的颜色,最后一个参数127为全透明
+    int color = gdImageColorAllocateAlpha(p_nail_image, 255, 255, 255, 127);
+    //使用颜色通道填充，背景色透明
+    gdImageFill(p_nail_image, 0, 0, color);
     gdImageCopyResampled(p_nail_image, p_image, 0, 0, 0, 0, nail_width, nail_height, gdImageSX(p_image), gdImageSY(p_image));
     
     switch (pic_type) {
@@ -161,11 +167,11 @@ static void __get_squarenail(gdImagePtr p_image, int pic_type) {
     int dstw = FDFS_SQUARENAIL_MAXSIZE, dsth = FDFS_SQUARENAIL_MAXSIZE;
     int dstx = 0, dsty = 0;
     snprintf(g_square_suffix, sizeof(g_square_suffix), "_%dx%d", FDFS_SQUARENAIL_MAXSIZE, FDFS_SQUARENAIL_MAXSIZE);
-    if ((srcw = 2 * dstw) && (srch == dsth * 2)) {
+    if ((srcw == 2 * dstw) && (srch == dsth * 2)) {
         return ;
     }
 
-    if (srcw > FDFS_SQUARENAIL_MAXSIZE && srch > FDFS_SQUARENAIL_MAXSIZE) {
+    if ((srcw > FDFS_SQUARENAIL_MAXSIZE) && (srch > FDFS_SQUARENAIL_MAXSIZE)) {
         //pic is bigger than 128 * 128 ,need to nail first
         int min = srcw > srch ? srch : srcw;
         srcx = (srcw - min) / 2;
@@ -203,6 +209,10 @@ static void __get_squarenail(gdImagePtr p_image, int pic_type) {
     gdImageFill(p_nail_image, 0, 0, color);
     gdImageCopyResampled(p_nail_image, p_image, dstx, dsty, srcx, srcy, dstw, dsth, srcw, srch);
     
+#ifndef DEBUG
+    CGI_DEBUG_LOG("[%d] src:{x:%d, y:%d, w:%d, h:%d}", __LINE__, srcx, srcy, srcw, srch);
+    CGI_DEBUG_LOG("[%d] dst:{x:%d, y:%d, w:%d, h:%d}", __LINE__, dstx, dsty, dstw, dsth);
+#endif
     switch (pic_type) {
     case TYPE_JPG:
         g_square_file_buffer = (char *)gdImageJpegPtr(p_nail_image, &g_square_file_size, -1);
