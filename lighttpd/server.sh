@@ -53,10 +53,14 @@ delete_crontab()
 
 start()
 {
-    if [ -f ./var/run/lighttpd.pid ] 
+    if [ -f $pidfile ] 
     then
-		printf "$red_clr%50s$end_clr\n" "${appname} is already running"
-		exit 1
+        ps -f `cat $pidfile` | grep ${appname} > /dev/null 2>&1
+    	if [ $? -eq 0 ]
+    	then
+	    	printf "$red_clr%50s$end_clr\n" "${appname} is already running"
+		    exit 1
+    	fi
     fi
     cd ./bin
     export LD_LIBRARY_PATH=/usr/lib
@@ -75,9 +79,9 @@ start()
 
 stop()
 {
-    if [ -f ./var/run/lighttpd.pid ] 
+    if [ -f $pidfile ] 
     then
-        pid=`cat ./var/run/lighttpd.pid`
+        pid=`cat $pidfile`
         echo "kill $pid"
         kill $pid
         sleep 1
@@ -94,8 +98,7 @@ restart()
 
 state()
 {
-#    echo "ps -f `cat ${pidfile}` | grep ${appname}"
-    if [ -f ./var/run/lighttpd.pid ] 
+    if [ -f $pidfile ] 
     then
         ps -f `cat ${pidfile}` | grep ${appname} 
         if [ $? -ne 0 ]
