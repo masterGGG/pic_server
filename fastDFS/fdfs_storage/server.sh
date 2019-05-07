@@ -5,11 +5,11 @@ end_clr="\033[0m"
 cd `dirname $0`
 cwd=`pwd`
 
-appname='fdfs_trackerd'
-pidfile='./data/fdfs_trackerd.pid'
+appname='fdfs_g02'
+PRG=./fdfs_g02 
+CONF=../etc/g02_storage.conf 
+pidfile='./data/fdfs_storaged.pid'
 svr_path=`pwd`
-PRG=./fdfs_trackerd
-CONF=../etc/tracker.conf
 
 add_crontab()
 {
@@ -26,7 +26,7 @@ add_crontab()
         fi
     else
         echo "${item1}" >> $tmpfile
-    fi
+	fi
 
     crontab $tmpfile
 	rm -f $tmpfile
