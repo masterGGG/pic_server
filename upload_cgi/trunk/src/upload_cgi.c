@@ -28,16 +28,13 @@ extern "C" {
 #include "cgic.h"
 #include "tcpip.h"
 
-#define FDFS_SUPPORT_THUMBNAIL 1
 #ifdef FDFS_SUPPORT_THUMBNAIL
 #include "hiredis.h"
 //Support thumbnail for 256 max
-#define FDFS_THUMBNAIL_MAXSIZE 256
 char *g_nail_file_buffer = NULL;
 int  g_nail_file_size = 0;
 char g_nail_suffix[SUFFIX_LEN];
 char g_fdfs_url_nail[FDFS_URL_LEN + 20];
-#define FDFS_SUPPORT_SQUARENAIL 1
 //Support squarenail for 128 max
 #ifdef FDFS_SUPPORT_SQUARENAIL
 #define FDFS_SQUARENAIL_MAXSIZE 128
@@ -78,14 +75,12 @@ static int __checkPictures() {
     ctx = redisConnectWithTimeout(config_get_strval("cache_ip"), config_get_intval("cache_port", 6379), tm);
     if (ctx == NULL) {
         CGI_ERROR_LOG("Can not allocate redis context");
-        //g_errorid = ERR_CHECK_SERVER;
         ret = FAIL;
         goto ERR;
     } else if (ctx->err) {
         CGI_ERROR_LOG("Can not connect to redis server %s:%d %s", config_get_strval("cache_ip"), config_get_intval("cache_port", 6379), ctx->errstr);
         redisFree(ctx);
         ctx = NULL;
-        //g_errorid = ERR_CHECK_SERVER;
         ret = FAIL;
         goto ERR;
     }
@@ -96,7 +91,6 @@ static int __checkPictures() {
     if (code == REDIS_ERR) {
         CGI_ERROR_LOG("[REDIS]:Redis Server pass:% err:%s", config_get_strval("cache_pass"), ctx->errstr);
         freeReplyObject(reply);
-        //g_errorid = ERR_CHECK_SERVER;
         ret = FAIL;
         goto ERR;
     }
@@ -110,7 +104,6 @@ static int __checkPictures() {
     if (code == REDIS_ERR) {
         CGI_ERROR_LOG("[REDIS]:Redis Server failed push pic to message queue err:%s", ctx->errstr);
         freeReplyObject(reply);
-        //g_errorid = ERR_CHECK_SERVER;
         ret = FAIL;
         goto ERR;
     }
@@ -122,30 +115,38 @@ ERR:
     return ret;
 }
 static void __get_thumbnail(gdImagePtr p_image, int pic_type) { 
-    int  nail_width = 0;
-    int  nail_height = 0;
-    if (gdImageSX(p_image) > FDFS_THUMBNAIL_MAXSIZE || gdImageSY(p_image) > FDFS_THUMBNAIL_MAXSIZE) {
-        int max = gdImageSX(p_image) > gdImageSY(p_image) ? gdImageSX(p_image) : gdImageSY(p_image);
-        nail_width = gdImageSX(p_image) * FDFS_THUMBNAIL_MAXSIZE / max;
-        nail_height = gdImageSY(p_image) * FDFS_THUMBNAIL_MAXSIZE / max;
-    } else {
-        /*
-         * TODO : Support limit to pic size (128KB)
-         */
-        nail_width = gdImageSX(p_image) / 2;
-        nail_height = gdImageSY(p_image) / 2;
+    /*
+     * 缩略图默认尺寸为原图尺寸，只有图片长宽过大，且图片大小过大才会压缩。
+     */
+    int  nwidth = gdImageSX(p_image);
+    int  nheight = gdImageSY(p_image);
+
+    int max_size = 1024 * config_get_intval("thumbnail_max_size", 128);
+    int max_edge = config_get_intval("thumbnail_max_edge", 256);
+//    int rate = config_get_intval("thumbnail_rate", 50);
+
+    if (g_file_size > max_size) {
+        if (nwidth > max_edge || nheight > max_edge) {
+            int max = nwidth > nheight ? nwidth : nheight;
+            nwidth = nwidth * max_edge / max;
+            nheight = nheight * max_edge / max;
+        }/* else {
+            nwidth = nwidth * rate / 100;
+            nheight = nheight * rate / 100;
+        }*/
     }
-    snprintf(g_nail_suffix, sizeof(g_nail_suffix), "_%dx%d",nail_width, nail_height);
+    
+    snprintf(g_nail_suffix, sizeof(g_nail_suffix), "_%dx%d",nwidth, nheight);
 
     gdImagePtr p_nail_image;
-    p_nail_image = gdImageCreateTrueColor(nail_width, nail_height);
+    p_nail_image = gdImageCreateTrueColor(nwidth, nheight);
     //设置保存PNG时保留透明通道信息
     gdImageSaveAlpha(p_nail_image, true);
     //拾取一个完全透明的颜色,最后一个参数127为全透明
     int color = gdImageColorAllocateAlpha(p_nail_image, 255, 255, 255, 127);
     //使用颜色通道填充，背景色透明
     gdImageFill(p_nail_image, 0, 0, color);
-    gdImageCopyResampled(p_nail_image, p_image, 0, 0, 0, 0, nail_width, nail_height, gdImageSX(p_image), gdImageSY(p_image));
+    gdImageCopyResampled(p_nail_image, p_image, 0, 0, 0, 0, nwidth, nheight, gdImageSX(p_image), gdImageSY(p_image));
     
     switch (pic_type) {
     case TYPE_JPG:
@@ -164,14 +165,17 @@ static void __get_thumbnail(gdImagePtr p_image, int pic_type) {
 #ifdef FDFS_SUPPORT_SQUARENAIL
 static void __get_squarenail(gdImagePtr p_image, int pic_type) {
     int srcw = gdImageSX(p_image), srch = gdImageSY(p_image), srcx = 0, srcy = 0;
-    int dstw = FDFS_SQUARENAIL_MAXSIZE, dsth = FDFS_SQUARENAIL_MAXSIZE;
+    
+    int max = config_get_intval("thumbsquare_edge", FDFS_SQUARENAIL_MAXSIZE);
+    
+    int dstw = max, dsth = max;
     int dstx = 0, dsty = 0;
-    snprintf(g_square_suffix, sizeof(g_square_suffix), "_%dx%d", FDFS_SQUARENAIL_MAXSIZE, FDFS_SQUARENAIL_MAXSIZE);
+    snprintf(g_square_suffix, sizeof(g_square_suffix), "_%dx%d", max, max);
     if ((srcw == 2 * dstw) && (srch == dsth * 2)) {
         return ;
     }
 
-    if ((srcw > FDFS_SQUARENAIL_MAXSIZE) && (srch > FDFS_SQUARENAIL_MAXSIZE)) {
+    if ((srcw > max) && (srch > max)) {
         //pic is bigger than 128 * 128 ,need to nail first
         int min = srcw > srch ? srch : srcw;
         srcx = (srcw - min) / 2;
@@ -199,7 +203,7 @@ static void __get_squarenail(gdImagePtr p_image, int pic_type) {
 
     //初始化九宫格画板
     gdImagePtr p_nail_image;
-    p_nail_image = gdImageCreateTrueColor(FDFS_SQUARENAIL_MAXSIZE, FDFS_SQUARENAIL_MAXSIZE);
+    p_nail_image = gdImageCreateTrueColor(max, max);
 
     //设置保存PNG时保留透明通道信息
     gdImageSaveAlpha(p_nail_image, true);
@@ -209,7 +213,7 @@ static void __get_squarenail(gdImagePtr p_image, int pic_type) {
     gdImageFill(p_nail_image, 0, 0, color);
     gdImageCopyResampled(p_nail_image, p_image, dstx, dsty, srcx, srcy, dstw, dsth, srcw, srch);
     
-#ifndef DEBUG
+#ifdef DEBUG
     CGI_DEBUG_LOG("[%d] src:{x:%d, y:%d, w:%d, h:%d}", __LINE__, srcx, srcy, srcw, srch);
     CGI_DEBUG_LOG("[%d] dst:{x:%d, y:%d, w:%d, h:%d}", __LINE__, dstx, dsty, dstw, dsth);
 #endif
@@ -479,43 +483,6 @@ PRINT_END:
     return;
 }
 
-/*
-int check_sess(const char *sess_key)
-{
-    g_check_sess_serv = new CTcp(config_get_strval("check_sess_serv"), 5, 10);
-    if (!g_check_sess_serv->is_connect()) {
-        CGI_ERROR_LOG("connect check sess server fail");
-        return SUCC;
-    }
-
-    char send_buf[1024];
-    memset(send_buf, 0, sizeof send_buf);
-    int j = PROTO_H_SIZE + 128;
-    strcpy(send_buf + PROTO_H_SIZE, sess_key);
-
-    init_proto_head(send_buf, g_request.userid, CHECK_SESS, j);
-    
-    char *recv_buf = NULL;
-    int recv_len = 0;
-
-    int ret = g_check_sess_serv->do_net_io((const char *)send_buf, j, &recv_buf, &recv_len);
-
-    if (ret != SUCC || (uint32_t)recv_len < PROTO_H_SIZE) {
-        CGI_ERROR_LOG("send to check_sess_srv fail. ret %u", ret);
-        if (recv_buf)
-            free(recv_buf);
-        return SUCC;
-    }
-    
-    protocol_t* pkg_recv = (protocol_t*)recv_buf; 
-
-    uint32_t result = pkg_recv->ret;
-
-    if(recv_buf) 
-        free(recv_buf);
-    return result;
-}
-*/
 int check_file()
 {
     /* get upload type */
@@ -593,17 +560,6 @@ int check_file()
         }
     }
 
-    /* check ip *//*
-    char *bind_ip = config_get_strval("bind_ip");
-        struct in_addr addr1;
-        memcpy(&addr1, &(g_request.ip), 4);
-    if(g_request.ip != inet_addr(bind_ip)){
-        CGI_ERROR_LOG("request is forbidden bind_ip[%d %s],req_ip[%u %s]",\
-                       inet_addr(bind_ip),bind_ip,g_request.ip,inet_ntoa(addr1));
-        g_errorid = ERR_HOSTID;
-        return FAIL;
-    }
-    */
     cgiFormFileSize((char *)"file", &g_file_size);
     if(g_file_size > PIC_MAX_LEN) {
         CGI_ERROR_LOG("upload file too big");
@@ -633,14 +589,6 @@ int check_file()
         g_errorid = ERR_TIMEOUT;
         return FAIL;
     }
-    /* check sess */
-    /*
-    if (check_sess(session_key) != SUCC) {
-        CGI_ERROR_LOG("is bad session.[%u %s]", g_request.userid, session_key);
-        g_errorid = ERR_TIMEOUT;
-        return FAIL;
-    }
-    */
 
     /* read file */
     g_file_buffer = (char *)malloc(PIC_MAX_LEN);
@@ -685,8 +633,9 @@ void upload_file()
         g_errorid = ERR_UNKNOWN;
         goto RETURN;
     }
-
+#ifdef DEBUG
     CGI_INFO_LOG("UPLOAD [%s][%u]", g_fdfs_url, g_request.userid);
+#endif
 RETURN:
     fdfs_fini();
 }
