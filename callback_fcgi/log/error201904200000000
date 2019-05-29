@@ -1,0 +1,7 @@
+[15:56:44][17652][delete_fcgi.c][177]main: Request method error.[POST]
+[15:58:01][17652][delete_fcgi.c][177]main: Request method error.[POST]
+[15:58:48][17652][delete_fcgi.c][177]main: Request method error.[POST]
+[15:59:26][17652][delete_fcgi.c][177]main: Request method error.[POST]
+[15:59:45][17652][delete_fcgi.c][177]main: Request method error.[POST]
+[16:02:02][17652][delete_fcgi.c][100]fdfs_delete_file: storage_delete_file1 nail file g01/M00/00/00/CgEBxVytpjSAODlWAEyQce91TKY415_256x170.jpg fail: errorno[2] No such file or directory
+[16:02:02][17652][delete_fcgi.c][208]main: fdfs_delete_file fail
