@@ -122,14 +122,13 @@ static void __get_thumbnail(gdImagePtr p_image, int pic_type) {
     int  nheight = gdImageSY(p_image);
 
     int max_size = 1024 * config_get_intval("thumbnail_max_size", 128);
-    int max_edge = config_get_intval("thumbnail_max_edge", 256);
+    int min_edge = config_get_intval("thumbnail_min_edge", 256);
 //    int rate = config_get_intval("thumbnail_rate", 50);
 
     if (g_file_size > max_size) {
-        if (nwidth > max_edge || nheight > max_edge) {
-            int max = nwidth > nheight ? nwidth : nheight;
-            nwidth = nwidth * max_edge / max;
-            nheight = nheight * max_edge / max;
+        if (nwidth > min_edge) {
+            nwidth = min_edge;
+            nheight = nheight * min_edge / nwidth;
         }/* else {
             nwidth = nwidth * rate / 100;
             nheight = nheight * rate / 100;
@@ -147,7 +146,8 @@ static void __get_thumbnail(gdImagePtr p_image, int pic_type) {
     //使用颜色通道填充，背景色透明
     gdImageFill(p_nail_image, 0, 0, color);
     gdImageCopyResampled(p_nail_image, p_image, 0, 0, 0, 0, nwidth, nheight, gdImageSX(p_image), gdImageSY(p_image));
-    
+#if 0 
+    //缩略图不分类型，全部存储为jpeg格式
     switch (pic_type) {
     case TYPE_JPG:
         g_nail_file_buffer = (char *)gdImageJpegPtr(p_nail_image, &g_nail_file_size, -1);
@@ -159,6 +159,9 @@ static void __get_thumbnail(gdImagePtr p_image, int pic_type) {
         g_nail_file_buffer = (char *)gdImageGifPtr(p_nail_image, &g_nail_file_size);
         break;
     }
+#else
+    g_nail_file_buffer = (char *)gdImageJpegPtr(p_nail_image, &g_nail_file_size, 90);
+#endif
     gdImageDestroy(p_nail_image);
 }
 
@@ -171,10 +174,11 @@ static void __get_squarenail(gdImagePtr p_image, int pic_type) {
     int dstw = max, dsth = max;
     int dstx = 0, dsty = 0;
     snprintf(g_square_suffix, sizeof(g_square_suffix), "_%dx%d", max, max);
+#if 0
     if ((srcw == 2 * dstw) && (srch == dsth * 2)) {
         return ;
     }
-
+#endif
     if ((srcw > max) && (srch > max)) {
         //pic is bigger than 128 * 128 ,need to nail first
         int min = srcw > srch ? srch : srcw;
@@ -213,10 +217,9 @@ static void __get_squarenail(gdImagePtr p_image, int pic_type) {
     gdImageFill(p_nail_image, 0, 0, color);
     gdImageCopyResampled(p_nail_image, p_image, dstx, dsty, srcx, srcy, dstw, dsth, srcw, srch);
     
-#ifdef DEBUG
+#if 1
     CGI_DEBUG_LOG("[%d] src:{x:%d, y:%d, w:%d, h:%d}", __LINE__, srcx, srcy, srcw, srch);
     CGI_DEBUG_LOG("[%d] dst:{x:%d, y:%d, w:%d, h:%d}", __LINE__, dstx, dsty, dstw, dsth);
-#endif
     switch (pic_type) {
     case TYPE_JPG:
         g_square_file_buffer = (char *)gdImageJpegPtr(p_nail_image, &g_square_file_size, -1);
@@ -228,6 +231,9 @@ static void __get_squarenail(gdImagePtr p_image, int pic_type) {
         g_square_file_buffer = (char *)gdImageGifPtr(p_nail_image, &g_square_file_size);
         break;
     }
+#else
+    g_square_file_buffer = (char *)gdImageJpegPtr(p_nail_image, &g_square_file_size, 90);
+#endif
     gdImageDestroy(p_nail_image);
 }
 #endif
