@@ -4,8 +4,10 @@ LIB 	= -L/usr/local/lib -ldl -lrt -ltaomee++ -ltaomee -L./ -lfcgi -lfastcommon -
 INCLUDE = -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include/ -I/usr/include/libxml2 \
           -I/usr/local/include/fastcommon -I/usr/local/include/fastdfs -I../../include
 
-OO	= log.o delete_fcgi.o
-TARGETS = delete.fcgi
+#INCLUDE += -I
+LIB     += -lcurl
+OO	= log.o callback_fcgi.o
+TARGETS = callback.fcgi
 
 
 #all: $(LOGLIB) $(OO) $(TARGETS) 
@@ -26,5 +28,5 @@ $(TARGETS):
 	
 clean:
 	rm -f *.o 
-	rm -f $(TARGETS)
+	rm -f $(TARGETS) ../bin/$(TARGETS)
 
