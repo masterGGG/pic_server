@@ -198,10 +198,9 @@ static bool _getNailSize(gdImagePtr p, int &w, int &h, const char *src) {
     }
 
     if (file_size > max_size) {
-        if (nail_w > max_edge || nail_h > max_edge) {
-            int max = nail_w > nail_h ? nail_w : nail_h;
-            h = nail_h * max_edge / max;
-            w = nail_w * max_edge / max;
+        if (nail_w > max_edge) {
+            h = nail_h * max_edge / nail_w;
+            w = max_edge;
         }
     } else {
         h = nail_h;
