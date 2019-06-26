@@ -67,7 +67,7 @@ uint32_t g_photoid = 0;
 uint32_t g_hostid = 0;
 
 #ifdef FDFS_SUPPORT_THUMBNAIL
-#define CREATE_PIC_CHECK_NOTIFICATION "LPUSH image:check:queue %s-%s"
+#define CREATE_PIC_CHECK_NOTIFICATION "LPUSH image:check:queue %s-%d-%s"
 static int __checkPictures() {
     redisContext *ctx;
     int ret = SUCC,code = 0;
@@ -98,7 +98,7 @@ static int __checkPictures() {
     struct in_addr addr1;
     memcpy(&addr1, &(g_request.ip), 4);
 
-    snprintf(query, sizeof(query), CREATE_PIC_CHECK_NOTIFICATION, inet_ntoa(addr1), g_fdfs_url_nail);
+    snprintf(query, sizeof(query), CREATE_PIC_CHECK_NOTIFICATION, inet_ntoa(addr1), g_request.userid, g_fdfs_url_nail);
     redisAppendCommand(ctx, query);
     code = redisGetReply(ctx, (void **)&reply);
     if (code == REDIS_ERR) {
@@ -108,9 +108,9 @@ static int __checkPictures() {
         goto ERR;
     }
 ERR:
-    if (reply != nullptr)
+    if (reply != NULL)
         freeReplyObject(reply);
-    if (ctx != nullptr)
+    if (ctx != NULL)
         redisFree(ctx);
     return ret;
 }
@@ -125,10 +125,11 @@ static void __get_thumbnail(gdImagePtr p_image, int pic_type) {
     int min_edge = config_get_intval("thumbnail_min_edge", 256);
 //    int rate = config_get_intval("thumbnail_rate", 50);
 
+        
     if (g_file_size > max_size) {
         if (nwidth > min_edge) {
-            nwidth = min_edge;
             nheight = nheight * min_edge / nwidth;
+            nwidth = min_edge;
         }/* else {
             nwidth = nwidth * rate / 100;
             nheight = nheight * rate / 100;
@@ -146,8 +147,8 @@ static void __get_thumbnail(gdImagePtr p_image, int pic_type) {
     //使用颜色通道填充，背景色透明
     gdImageFill(p_nail_image, 0, 0, color);
     gdImageCopyResampled(p_nail_image, p_image, 0, 0, 0, 0, nwidth, nheight, gdImageSX(p_image), gdImageSY(p_image));
+    
 #if 0 
-    //缩略图不分类型，全部存储为jpeg格式
     switch (pic_type) {
     case TYPE_JPG:
         g_nail_file_buffer = (char *)gdImageJpegPtr(p_nail_image, &g_nail_file_size, -1);
@@ -160,6 +161,7 @@ static void __get_thumbnail(gdImagePtr p_image, int pic_type) {
         break;
     }
 #else
+    //缩略图不分类型，全部存储为jpeg格式
     g_nail_file_buffer = (char *)gdImageJpegPtr(p_nail_image, &g_nail_file_size, 90);
 #endif
     gdImageDestroy(p_nail_image);
@@ -168,17 +170,19 @@ static void __get_thumbnail(gdImagePtr p_image, int pic_type) {
 #ifdef FDFS_SUPPORT_SQUARENAIL
 static void __get_squarenail(gdImagePtr p_image, int pic_type) {
     int srcw = gdImageSX(p_image), srch = gdImageSY(p_image), srcx = 0, srcy = 0;
-    
+
     int max = config_get_intval("thumbsquare_edge", FDFS_SQUARENAIL_MAXSIZE);
-    
+    //配置一个九宫格图片的后缀，用以保持图片名称不变的情况下，修改图片内部的尺寸
+    char *suffix = config_get_strval("thumbsquare_suffix");
     int dstw = max, dsth = max;
     int dstx = 0, dsty = 0;
-    snprintf(g_square_suffix, sizeof(g_square_suffix), "_%dx%d", max, max);
+    snprintf(g_square_suffix, sizeof(g_square_suffix), "_%s", suffix);
 #if 0
     if ((srcw == 2 * dstw) && (srch == dsth * 2)) {
         return ;
     }
 #endif
+
     if ((srcw > max) && (srch > max)) {
         //pic is bigger than 128 * 128 ,need to nail first
         int min = srcw > srch ? srch : srcw;
@@ -216,10 +220,13 @@ static void __get_squarenail(gdImagePtr p_image, int pic_type) {
     //使用颜色通道填充，背景色透明
     gdImageFill(p_nail_image, 0, 0, color);
     gdImageCopyResampled(p_nail_image, p_image, dstx, dsty, srcx, srcy, dstw, dsth, srcw, srch);
-    
-#if 1
+#ifdef DEBUG 
     CGI_DEBUG_LOG("[%d] src:{x:%d, y:%d, w:%d, h:%d}", __LINE__, srcx, srcy, srcw, srch);
     CGI_DEBUG_LOG("[%d] dst:{x:%d, y:%d, w:%d, h:%d}", __LINE__, dstx, dsty, dstw, dsth);
+    CGI_DEBUG_LOG("[%d] pic width:%d, height:%d", __LINE__, gdImageSX(p_nail_image), gdImageSY(p_nail_image));
+#endif
+
+#if 0
     switch (pic_type) {
     case TYPE_JPG:
         g_square_file_buffer = (char *)gdImageJpegPtr(p_nail_image, &g_square_file_size, -1);
@@ -307,6 +314,9 @@ int fdfs_upload_file(const char *image_buf, uint32_t size,
         tracker_disconnect_server(&storage_server);
         return FAIL;
     }
+#ifdef DEBUG
+    CGI_DEBUG_LOG("[%d] src<%s> size %d.", __LINE__, fdfs_url, size);
+#endif
     
 #ifdef FDFS_SUPPORT_THUMBNAIL
     result = storage_upload_slave_by_filebuff1(p_tracker_server,
@@ -323,6 +333,9 @@ int fdfs_upload_file(const char *image_buf, uint32_t size,
         tracker_disconnect_server(&storage_server);
         return FAIL;
     }
+#ifdef DEBUG
+    CGI_DEBUG_LOG("[%d] src nail<%s> size %d.", __LINE__, g_fdfs_url_nail, g_nail_file_size);
+#endif
     
 #ifdef FDFS_SUPPORT_SQUARENAIL
     if (0 != strcmp(g_square_suffix, g_nail_suffix)) {
@@ -342,6 +355,9 @@ int fdfs_upload_file(const char *image_buf, uint32_t size,
         }
     } else 
         strcpy(g_fdfs_url_squarenail, g_fdfs_url_nail);
+#ifdef DEBUG
+    CGI_DEBUG_LOG("[%d] src<%s> size %d.", __LINE__, g_fdfs_url_squarenail, g_square_file_size);
+#endif
 #endif
     return __checkPictures();
 #endif
@@ -415,26 +431,64 @@ int check_image(const char *image_buf, int size, char suffix[SUFFIX_LEN])
         pic_type = TYPE_UNKNOWN;    
     }
 
-    gdImagePtr p_image;
+    gdImagePtr p_image_src, p_image = NULL;
 
     switch (pic_type) {
     case TYPE_JPG:
-        p_image = gdImageCreateFromJpegPtr(size, (void*)image_buf);
+        p_image_src = gdImageCreateFromJpegPtr(size, (void*)image_buf);
         break;
     case TYPE_PNG:
-        p_image = gdImageCreateFromPngPtr(size, (void*)image_buf);
+        p_image_src = gdImageCreateFromPngPtr(size, (void*)image_buf);
         break;
     case TYPE_GIF:
-        p_image = gdImageCreateFromGifPtr(size, (void*)image_buf);
+        p_image_src = gdImageCreateFromGifPtr(size, (void*)image_buf);
         break;
     default:
-        p_image = NULL;
+        p_image_src = NULL;
         CGI_ERROR_LOG("bad pic type [%u]", pic_type);
         break;
     }
 
-    if (!p_image)
+    if (!p_image_src)
         return FAIL;
+
+    //GIF格式图片不需要旋转操作，直接跳过
+    if (pic_type != TYPE_GIF) {
+        //拾取一个完全透明的颜色,最后一个参数127为全透明
+        int gdcolor = gdImageColorAllocateAlpha(p_image_src, 255, 255, 255, 127);
+        switch (g_request.is_head) {
+        case 3:
+                p_image = gdImageRotateInterpolated(p_image_src, 180, gdcolor);
+                gdImageDestroy(p_image_src);
+            break;
+        case 6:
+            p_image = gdImageRotateInterpolated(p_image_src, 270, gdcolor);
+            gdImageDestroy(p_image_src);
+            break;
+        case 8:
+            p_image = gdImageRotateInterpolated(p_image_src, 90, gdcolor);
+            gdImageDestroy(p_image_src);
+            break;
+        default:
+            break;
+        }
+    }
+
+    //对于不需要旋转的图片，直接使用原始gd指针即可
+    if (p_image == NULL) 
+        p_image = p_image_src;
+    else {
+        if (g_file_buffer)
+            free(g_file_buffer);
+        switch (pic_type) {
+        case TYPE_JPG:
+            g_file_buffer = (char*)gdImageJpegPtr(p_image, &g_file_size, 100);
+            break;
+        case TYPE_PNG:
+            g_file_buffer = (char*)gdImagePngPtr(p_image, &g_file_size);
+            break;
+        }
+    }
 
     if (gdImageSX(p_image) < 5 || gdImageSY(p_image) < 5) {
         gdImageDestroy(p_image);
